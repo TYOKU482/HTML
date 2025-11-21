@@ -16,7 +16,6 @@
     height: 100vh;
     padding: 15px;
   }
-
   body::before {
     content: "";
     position: absolute;
@@ -30,9 +29,7 @@
     animation: floatPattern 60s linear infinite;
     z-index:0;
   }
-
   @keyframes floatPattern { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
   h1 { text-align: center; color: crimson; margin:5px 0 10px 0; font-size:24px; position:relative; z-index:1; }
   #rules {
     background: rgba(249, 249, 249, 0.8);
@@ -82,7 +79,6 @@
     z-index:1;
   }
   button:hover { background-color:#b30000; }
-
   .particle {
     position:absolute;
     width:6px;
@@ -94,7 +90,6 @@
     z-index:2;
   }
   @keyframes float { 0% { transform: translateY(0) translateX(0); opacity:1; } 100% { transform: translateY(-600px) translateX(50px); opacity:0; } }
-
   .confetti { border-radius:2px; z-index:0; }
 </style>
 </head>
@@ -131,7 +126,6 @@ const prompts = [
   "学校・会社で起きた面白い出来事を劇場風に",
   "好きな飲み物や食べ物を擬音で表現しよう"
 ];
-
 let todayPrompt = prompts[Math.floor(Math.random()*prompts.length)];
 document.getElementById("prompt").textContent=`今日のお題: ${todayPrompt}`;
 
@@ -263,6 +257,25 @@ function resetGame(){
 
   finalMessageDiv.innerHTML = "";
 }
+
+// お題チェンジ機能（成功・大成功時のみ）
+let promptChangeInterval;
+function startPromptChanger(){
+  clearInterval(promptChangeInterval);
+  promptChangeInterval = setInterval(()=>{
+    if(gameEnded) return;
+    const text = rouletteDiv.textContent;
+    if(text.includes("結果: 成功") || text.includes("結果: 大成功")){
+      let newPrompt;
+      do { newPrompt = prompts[Math.floor(Math.random()*prompts.length)]; }
+      while(newPrompt === todayPrompt);
+      todayPrompt = newPrompt;
+      document.getElementById("prompt").textContent=`今日のお題: ${todayPrompt}`;
+      rouletteDiv.textContent = "お題を更新しました！";
+    }
+  }, 5000);
+}
+startPromptChanger();
 </script>
 
 </body>
