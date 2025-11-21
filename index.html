@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>お題チャレンジ＆運試し</title>
+<style>
+  html, body { margin:0; padding:0; height:100%; position:relative; overflow:hidden; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #ffefba, #a0e0ff);
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100vh;
+    padding: 15px;
+  }
+
+  body::before {
+    content: "";
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    top: -50%;
+    left: -50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 10%, transparent 10%);
+    background-size: 50px 50px;
+    pointer-events: none;
+    animation: floatPattern 60s linear infinite;
+    z-index:0;
+  }
+
+  @keyframes floatPattern {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  h1 { text-align: center; color: crimson; margin:5px 0 10px 0; font-size:24px; position:relative; z-index:1; }
+  #rules {
+    background: rgba(249, 249, 249, 0.8);
+    border-left:6px solid crimson;
+    padding:10px;
+    margin-bottom:10px;
+    font-size:14px;
+    line-height:1.4;
+    width:90%;
+    position:relative;
+    z-index:1;
+  }
+  #prompt { font-size:18px; font-weight:bold; color:#222; margin:10px 0; text-align:center; position:relative; z-index:1; }
+ textarea {
+    width: 90%;
+    height: 10vh; 
+    font-size: 16px;
+    padding: 8px;
+    border: 2px solid #ccc;
+    border-radius: 6px;
+    resize: none;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+}
+
+  }
+  #score, #finalMessage { margin:8px 0; font-weight:bold; font-size:16px; text-align:center; position:relative; z-index:1; }
+  #roulette {
+    font-size:28px;
+    text-align:center;
+    cursor:pointer;
+    color: crimson;
+    margin-top:8px;
+    transition: transform 0.2s;
+    position:relative;
+    z-index:1;
+  }
+  button {
+    padding:8px 20px;
+    font-size:14px;
+    background-color: crimson;
+    color:#fff;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+  button:hover { background-color:#b30000; }
+
+  .particle {
+    position:absolute;
+    width:6px;
+    height:6px;
+    background: crimson;
+    border-radius:50%;
+    pointer-events:none;
+    animation: float 4s linear infinite;
+    z-index:2;
+  }
+  @keyframes float {
+    0% { transform: translateY(0) translateX(0); opacity:1; }
+    100% { transform: translateY(-600px) translateX(50px); opacity:0; }
+  }
+
+  .confetti { border-radius:2px; z-index:0; }
+</style>
+</head>
+<body>
+
+<h1>お題チャレンジ＆運試し</h1>
+
+<div id="rules">
+  <strong>ルール説明:</strong><br>
+  1. 今日のお題に沿った文章を書こう。<br>
+  2. 文章は <strong>10文字以上・300文字以内</strong> で書いてください。<br>
+  3. お題にはちょっと変な制限や条件があります（例：擬人化、感情表現必須）。<br>
+  4. 文章を書いたら「提出」ボタンを押す。<br>
+  5. ルーレットが回り、クリックで停止。結果に応じてスコアが加算されます！<br>
+  6. 「成功」や「大成功」を狙って高得点を目指そう！<br>
+  7. SNSでスクショしてシェアすると盛り上がるよ！！！
+</div>
+
+<div id="prompt">お題を生成中…</div>
+<textarea id="input" placeholder="ここに文章を書こう"></textarea>
+<button id="submit">提出</button>
+<button id="end">終了</button>
+<div id="score">合計スコア: 0</div>
+<div id="roulette">🎲🎲🎲🎲🎲🎲</div>
+<div id="finalMessage"></div>
+
+<script>
+const prompts = [
+  "今日の朝食、感情を入れて描写しよう",
+  "通勤・通学中に見たものを擬人化して書こう",
+  "最近ハマってることを漫画風に表現",
+  "今日の気分を一言で面白く書こう",
+  "自分のペットの行動をセリフ付きで書こう",
+  "学校・会社で起きた面白い出来事を劇場風に",
+  "好きな飲み物や食べ物を擬音で表現しよう"
+];
+let todayPrompt = prompts[Math.floor(Math.random()*prompts.length)];
+document.getElementById("prompt").textContent=`今日のお題: ${todayPrompt}`;
+
+const submit = document.getElementById("submit");
+const endBtn = document.getElementById("end");
+const input = document.getElementById("input");
+const scoreDiv = document.getElementById("score");
+const rouletteDiv = document.getElementById("roulette");
+const finalMessageDiv = document.getElementById("finalMessage");
+
+let currentScore = 0;
+let maxScore = 0;
+let rouletteInterval;
+let gameEnded = false;
+
+function createParticles(num=20,color="crimson"){
+  for(let i=0;i<num;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    p.style.left=Math.random()*window.innerWidth+'px';
+    p.style.top=window.innerHeight+Math.random()*50+'px';
+    p.style.background=color;
+    p.style.animationDuration=(2+Math.random()*2)+'s';
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),4000);
+  }
+}
+
+function createConfetti(){
+  const confettiCount = 40;
+  for(let i=0;i<confettiCount;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*window.innerWidth+'px';
+    c.style.backgroundColor=`hsl(${Math.random()*360}, 80%, 70%)`;
+    c.style.width=(5+Math.random()*5)+'px';
+    c.style.height=(10+Math.random()*10)+'px';
+    c.style.opacity=0.9;
+    c.style.position='absolute';
+    c.style.top=-20+'px';
+    c.style.pointerEvents='none';
+    document.body.appendChild(c);
+    const fallDuration = 4+Math.random()*4;
+    c.style.transition=`transform ${fallDuration}s linear, top ${fallDuration}s linear`;
+    setTimeout(()=>{
+      c.style.transform=`rotate(${Math.random()*360}deg)`;
+      c.style.top=window.innerHeight+20+'px';
+      c.style.left=parseFloat(c.style.left)+Math.random()*100-50+'px';
+    },20);
+    setTimeout(()=>c.remove(), (fallDuration+0.1)*2000);
+  }
+}
+setInterval(createConfetti, 2000);
+
+submit.addEventListener("click",()=>{
+  if(gameEnded) return;
+  const text=input.value.trim();
+  if(text.length<10){ alert("文章は10文字以上で書いてください！"); return; }
+  if(text.length>300){ alert("文章は300文字以内に収めてください！"); return; }
+  scoreDiv.textContent="ルーレットで判定中…クリックで停止";
+  createParticles(20);
+  startRoulette(text);
+  input.value="";
+});
+
+function startRoulette(userText){
+  const symbols=["成功","失敗","成功","失敗","成功","大成功"];
+  let idx=0;
+  rouletteInterval=setInterval(()=>{
+    rouletteDiv.textContent=symbols[idx];
+    rouletteDiv.style.transform=`rotate(${Math.sin(idx)*10}deg) scale(${1+Math.random()*0.15})`;
+    idx=(idx+1)%symbols.length;
+  },100);
+
+  rouletteDiv.onclick=()=>{
+    clearInterval(rouletteInterval);
+    const result=symbols[Math.floor(Math.random()*symbols.length)];
+    rouletteDiv.textContent=`結果: ${result}!`;
+
+    rouletteDiv.style.transition="transform 0.5s,color 0.5s";
+    rouletteDiv.style.transform="scale(1.5) rotate(0deg)";
+    if(result==="大成功"){ rouletteDiv.style.color="gold"; createParticles(40,"gold"); currentScore+=30; }
+    else if(result==="成功"){ rouletteDiv.style.color="green"; createParticles(30,"green"); currentScore+=10; }
+    else{ rouletteDiv.style.color="red"; createParticles(20,"red"); endGame(); }
+
+    if(currentScore > maxScore) maxScore = currentScore;
+
+    scoreDiv.textContent=`合計スコア: ${currentScore}`;
+    rouletteDiv.onclick=null;
+  }
+}
+
+endBtn.addEventListener("click",()=>{ endGame(); });
+
+function endGame(){
+  if(gameEnded) return;
+  gameEnded = true;
+  clearInterval(rouletteInterval);
+  input.disabled = true;
+  submit.disabled = true;
+  rouletteDiv.textContent = "";
+  finalMessageDiv.innerHTML = `ありがとうございました！<br>最高スコア: ${maxScore}`;
+  finalMessageDiv.style.fontSize = "20px";
+  finalMessageDiv.style.color = "crimson";
+}
+</script>
+
+</body>
+</html>
